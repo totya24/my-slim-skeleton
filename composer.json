@@ -1,0 +1,24 @@
+{
+    "name": "totya/slim-skeleton",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tóth Zoltán",
+            "email": "toth.zoltan@fps.hu"
+        }
+    ],
+    "require": {
+        "zhangshize/slim-facades": "^1.1",
+        "slim/slim": "^3.7",
+        "slim/twig-view": "^2.2",
+        "brandonwamboldt/utilphp": "^1.1",
+        "dopesong/slim-whoops": "^2.2",
+        "catfan/Medoo": "^1.2"
+    },
+	"autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        }
+    }
+}
