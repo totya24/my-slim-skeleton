@@ -31,23 +31,27 @@ Class BaseController
 		$defaultAssets = Config::get('assets');
 		if(!empty($defaultAssets['css'])){
 			foreach($defaultAssets['css'] as $id => $css){
-				$appData['styleSheets'][$id] = ($this->isExternal($css) ? '' : $this->assetsUrl) . $css;
+				$appData['styleSheets'][$id] = ($this->_isExternalUrl($css) ? '' : $this->assetsUrl) . $css;
 			}
 		}
 		if(!empty($defaultAssets['js']['header'])){
 			foreach($defaultAssets['js']['header'] as $id => $js){
-				$appData['headerScripts'][$id] = ($this->isExternal($js) ? '' : $this->assetsUrl) . $js;
+				$appData['headerScripts'][$id] = ($this->_isExternalUrl($js) ? '' : $this->assetsUrl) . $js;
 			}
 		}
 		if(!empty($defaultAssets['js']['footer'])){
 			foreach($defaultAssets['js']['footer'] as $id => $js){
-				$appData['footerScripts'][$id] = ($this->isExternal($js) ? '' : $this->assetsUrl) . $js;
+				$appData['footerScripts'][$id] = ($this->_isExternalUrl($js) ? '' : $this->assetsUrl) . $js;
 			}
 		}
 
 		$this->twigEnv->addGlobal('app', $appData);
 	}
 	
+    public function _isExternalUrl($url){
+		return !(strpos($url, '//') === false);
+	}
+    
 	public function addCss($css = null, $id = null){
 		if(empty($css)) return false;
 
@@ -56,7 +60,7 @@ Class BaseController
 			$pathInfo = pathinfo($css);
 			$id = $pathInfo['filename'];
 		}
-		$appData['app']['styleSheets'][$id] = ($this->isExternal($css) ? '' : $this->assetsUrl) . $css;
+		$appData['app']['styleSheets'][$id] = ($this->_isExternalUrl($css) ? '' : $this->assetsUrl) . $css;
 
 		$this->twigEnv->addGlobal('app', $appData['app']);
 	}
@@ -78,27 +82,48 @@ Class BaseController
 	public function addScript($script = null, $id = null, $order = null, $position = 'headerScripts'){
 		if(empty($script)) return false;
 
-		//FIXME: handle order
-
 		$appData = $this->twigEnv->getGlobals('app');
 		$scripts = $appData['app'][$position];
 		if(is_null($id)){
 			$pathInfo = pathinfo($script);
 			$id = $pathInfo['filename'];
 		}
-		$scripts[$id] = ($this->isExternal($script) ? '' : $this->assetsUrl) . $script;
 		
-		$appData['app'][$position] = $scripts;
-
+        $script = ($this->_isExternalUrl($script) ? '' : $this->assetsUrl) . $script;
+		
+        if($order){
+            $ordering = explode(':', $order);
+            $pos = array_search($ordering[1], array_keys($scripts));
+            
+            if(false !== $pos){
+                $pos = $ordering[0] == 'after' ? $pos+1 : $pos;
+                $scripts = array_slice($scripts, 0, $pos, true) + [$id => $script] + array_slice($scripts, $pos, NULL, true);
+            }
+        } else {
+            $scripts[$id] = $script;
+        }
+            
+        $appData['app'][$position] = $scripts;  
+        
 		$this->twigEnv->addGlobal('app', $appData['app']);
 	}
 	
 	public function removeScript($id, $position = null){
-		//TODO
+		$appData = $this->twigEnv->getGlobals('app');
+        
+		if($position == 'header' || is_null($position)){
+			unset($appData['app']['headerScripts'][$id]);
+		}
+        
+		if($position == 'footer' || is_null($position)){
+			unset($appData['app']['footerScripts'][$id]);
+		}
+        
+		$this->twigEnv->addGlobal('app', $appData['app']);
 	}
 
 	public function setMeta($data, $value = null){
-		$metaData = array();
+		$metaData = [];
 		if(is_array($data)){
 			$metaData = $data;
 		}else {
@@ -115,9 +140,5 @@ Class BaseController
 		$appData['app']['meta'] = $newMeta;
         $this->twigEnv->addGlobal('app', $appData['app']);
     }
-
-	public function isExternal($url){
-		return !(strpos($url, '//') === false);
-	}
 	
 }

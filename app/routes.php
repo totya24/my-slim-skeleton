@@ -2,8 +2,8 @@
 
 use SlimFacades\Route;
 
-Route::get('/test', '\App\Controllers\TestController:home');
+Route::get('/', '\App\Controllers\MainController:home');
 
-$app->get('/', function ($request, $response, $args) {
-    return '<h1>Slim boilerplate</h1>';
+$app->get('/error', function ($request, $response, $args) {
+    mktim();
 });

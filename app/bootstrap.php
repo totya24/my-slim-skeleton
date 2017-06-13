@@ -15,7 +15,9 @@ Facade::setFacadeApplication($app);
 $container = $app->getContainer();
 
 $container['phpErrorHandler'] = $container['errorHandler'] = function($c) {
-    return new WhoopsError($c->get('settings')['displayErrorDetails']);
+    if($c->get('settings')['displayErrorDetails']){
+		return new WhoopsError();
+	}
 };
 
 $container['db'] = function($c) {
